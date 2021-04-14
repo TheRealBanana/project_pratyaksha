@@ -114,3 +114,4 @@ dmypy.json
 .pyre/
 
 testing_10dof_mems_sensor/libs/
+testing_10dof_mems_sensor/SensorMonitor/
