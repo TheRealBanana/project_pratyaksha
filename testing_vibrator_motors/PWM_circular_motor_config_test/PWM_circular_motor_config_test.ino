@@ -13,6 +13,7 @@ struct MotorOutput {
   int motor2_pwm;
 };
 
+int motorpin_index;
 int pot_value = 0;
 int pot_angle = 0;
 float pot_percent = 0.0f;
@@ -60,9 +61,11 @@ void setup() {
 
 void getOutputPinsFromAngle(int angle, struct MotorOutput *motorvals) {
   angle = constrain(angle, 0, 360);
-  motorvals->motor1_pin = MOTORS[angle/MOTOR_ANGLE];
-  if (motorvals->motor1_pin+1 > NUM_MOTORS) motorvals->motor2_pin = MOTORS[0];
-  else motorvals->motor2_pin = MOTORS[motorvals->motor1_pin+1];
+  motorpin_index = angle/MOTOR_ANGLE - 1;
+  if (motorpin_index < 0) motorpin_index = 11;
+  motorvals->motor1_pin = MOTORS[motorpin_index];
+  if (motorpin_index+1 > NUM_MOTORS) motorvals->motor2_pin = MOTORS[0];
+  else motorvals->motor2_pin = MOTORS[motorpin_index+1];
   Serial.println("Motor pins: " + (String)motorvals->motor1_pin + " - " + (String)motorvals->motor2_pin);
 }
 
