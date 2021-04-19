@@ -5,8 +5,7 @@ int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapp
 int MOTORS[NUM_MOTORS] = {3, 5, 6, 9, 10, 11}; //All 6 PWM pins on the Uno/Nano/Mini
 int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
 int PWM_MAX = 255; //Max range of our PWM output
-int PWM_END_DELAY = 10; //Delay between writing the PWM signal and writing a 0 signal
-
+int PWM_DELAY = 10; //Trying to get rid of weird flickering now
 
 struct MotorOutput {
   int motor1_pin;
@@ -63,27 +62,30 @@ void setup() {
 
 void getOutputPinsFromAngle(int angle, struct MotorOutput *motorvals) {
   angle = constrain(angle, 0, 360);
-  motorpin_index = angle/MOTOR_ANGLE - 1;
+  motorpin_index = angle/MOTOR_ANGLE;// - 1;
+  //Serial.print("  |  motorpin_index 1: " + (String)motorpin_index);
   if (motorpin_index < 0) motorpin_index = NUM_MOTORS - 1;
+  else if (motorpin_index == NUM_MOTORS) motorpin_index = 0;
   motorvals->motor1_pin = MOTORS[motorpin_index];
-  if (motorpin_index > NUM_MOTORS) motorvals->motor2_pin = MOTORS[0];
+  //Serial.print("  |  motorpin_index 2: " + (String)motorpin_index);
+  if (motorpin_index == NUM_MOTORS-1) motorvals->motor2_pin = MOTORS[0];
   else motorvals->motor2_pin = MOTORS[motorpin_index+1];
-  Serial.println("Motor pins: " + (String)motorvals->motor1_pin + " - " + (String)motorvals->motor2_pin);
+  //Serial.print("  |  Motor pins: " + (String)motorvals->motor1_pin + " - " + (String)motorvals->motor2_pin);
 }
 
 struct MotorOutput interpFromAngle(int angle, struct MotorOutput *motorvals){ 
   float ratio = 1.0 - ((float)(angle%MOTOR_ANGLE)/(float)MOTOR_ANGLE);
   motorvals->motor1_pwm = (int)(ratio * PWM_MAX);
   motorvals->motor2_pwm = PWM_MAX - motorvals->motor1_pwm;
-  Serial.println("Motor PWM vals: " + (String)motorvals->motor1_pwm + " - " + (String)motorvals->motor2_pwm);
+  //Serial.println("  |  Motor PWM vals: " + (String)motorvals->motor1_pwm + " - " + (String)motorvals->motor2_pwm);
 }
 
+void zeroPWMvals() { for (int i=0; i<NUM_MOTORS; i++) analogWrite(MOTORS[i], 0); }
 void writeToMotors(struct MotorOutput *motorvals) {
+  zeroPWMvals(); 
   analogWrite(motorvals->motor1_pin, motorvals->motor1_pwm); 
   analogWrite(motorvals->motor2_pin, motorvals->motor2_pwm); 
-  delay(PWM_END_DELAY);
-  analogWrite(motorvals->motor1_pin, 0); 
-  analogWrite(motorvals->motor2_pin, 0); 
+  delay(PWM_DELAY);
 }
 
 void loop() {
@@ -91,8 +93,9 @@ void loop() {
   
   // Map the pot output from 0-1023 to 0-360
   pot_value = analogRead(POT_PIN);
-  //Serial.println("Pot value: " + (String)pot_value);
+  //Serial.print("Pot value: " + (String)pot_value);
   pot_angle = map(pot_value, 0, 1023, 0, 360);
+  //Serial.print("Pot angle: " + (String)pot_angle);
   //Get the output pins based on the angle
   getOutputPinsFromAngle(pot_angle, &motor_outputs);
   //Get the PWM values for those motors, interpolated between the two
