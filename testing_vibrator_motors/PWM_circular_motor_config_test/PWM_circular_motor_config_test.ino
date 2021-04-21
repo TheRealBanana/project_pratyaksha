@@ -5,7 +5,7 @@ int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapp
 int MOTORS[NUM_MOTORS] = {3, 5, 6, 9, 10, 11}; //All 6 PWM pins on the Uno/Nano/Mini
 int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
 int PWM_MAX = 255; //Max range of our PWM output
-int PWM_DELAY = 10; //Trying to get rid of weird flickering now
+float PWM_DELAY = 1.0; //Trying to get rid of weird flickering now
 
 struct MotorOutput {
   int motor1_pin;
@@ -20,37 +20,26 @@ int pot_angle = 0;
 float pot_percent = 0.0f;
 
 //My first idea for trying to smooth out the magnetic data
-//Take n samples per second and take an average over the last m samples (moving average)
-int buffer_size = 255;
+//Take the average heading over the last buffer_size readings (rolling average).
+bool ENABLE_FILTERING = true;
+int buffer_size = 25;
 ArduinoQueue<int> heading_buffer(buffer_size);
-
-//All the queue libs I could fine didn't have all the features I needed
-class HeadingBuffer {
-  public:
-    HeadingBuffer(int size);
-    void add(int val);
-    int take();
-    int peak(int index);
-    int getSum();
-    int getAverage();
-    int isFull();
-    int size();
-  private:
-    //variables like the array, size, pointer, etc..
-    //dont be afraid to do the naive implementation as long as it works
-    //who cares if there is a better solution. Get it working!
-  
-};
+int heading_buffer_rolling_sum = 0;
 
 int getFilteredHeading(int newheading) {
   if (!heading_buffer.isFull()) {
     heading_buffer.enqueue(newheading);
+    heading_buffer_rolling_sum += newheading;
+    Serial.println(" - notfull returning last heading");
     return newheading;
   }
-  //do maths
-  //Add the new heading and take the average of all values
-  
-  
+  // Now that we have a full buffer of heading values, we take the average of them all
+  // Only two things that change are removing the oldest heading value and adding a new value
+  heading_buffer_rolling_sum -= heading_buffer.dequeue();
+  heading_buffer.enqueue(newheading);
+  heading_buffer_rolling_sum += newheading;
+  Serial.println(" - AVG HEADING: " + (String)(heading_buffer_rolling_sum/buffer_size));
+  return heading_buffer_rolling_sum/buffer_size; 
 }
 
 void setup() {
@@ -88,14 +77,24 @@ void writeToMotors(struct MotorOutput *motorvals) {
   delay(PWM_DELAY);
 }
 
+int a = 0;
+bool f = true;
+
 void loop() {
   struct MotorOutput motor_outputs; //Should be destroyed and recreated each loop iteration, not leaking.
   
   // Map the pot output from 0-1023 to 0-360
   pot_value = analogRead(POT_PIN);
   //Serial.print("Pot value: " + (String)pot_value);
-  pot_angle = map(pot_value, 0, 1023, 0, 360);
-  //Serial.print("Pot angle: " + (String)pot_angle);
+  pot_angle = map(pot_value, 0, 1023, 0, 360);  
+  //pot_angle = a;
+  //if (f) a++;
+  //else a--;
+  //if (a == 300) f=false;
+  //if (a == 0) f=true;
+  Serial.print("Pot angle: " + (String)pot_angle);
+  //smooth the value out
+  if (ENABLE_FILTERING) pot_angle = getFilteredHeading(pot_angle);
   //Get the output pins based on the angle
   getOutputPinsFromAngle(pot_angle, &motor_outputs);
   //Get the PWM values for those motors, interpolated between the two
