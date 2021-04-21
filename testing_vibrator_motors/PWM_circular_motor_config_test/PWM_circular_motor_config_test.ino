@@ -3,8 +3,9 @@
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
 int MOTORS[NUM_MOTORS] = {3, 5, 6, 9, 10, 11}; //All 6 PWM pins on the Uno/Nano/Mini
+int MOTOR_PWM_MIN = 80; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
+int MOTOR_PWM_MAX = 255; //Max range of our PWM output
 int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
-int PWM_MAX = 255; //Max range of our PWM output
 float PWM_DELAY = 1.0; //Trying to get rid of weird flickering now
 
 struct MotorOutput {
@@ -64,16 +65,18 @@ void getOutputPinsFromAngle(int angle, struct MotorOutput *motorvals) {
 
 struct MotorOutput interpFromAngle(int angle, struct MotorOutput *motorvals){ 
   float ratio = 1.0 - ((float)(angle%MOTOR_ANGLE)/(float)MOTOR_ANGLE);
-  motorvals->motor1_pwm = (int)(ratio * PWM_MAX);
-  motorvals->motor2_pwm = PWM_MAX - motorvals->motor1_pwm;
+  motorvals->motor1_pwm = (int)(ratio * MOTOR_PWM_MAX);
+  motorvals->motor2_pwm = MOTOR_PWM_MAX - motorvals->motor1_pwm;
   //Serial.println("  |  Motor PWM vals: " + (String)motorvals->motor1_pwm + " - " + (String)motorvals->motor2_pwm);
 }
 
 void zeroPWMvals() { for (int i=0; i<NUM_MOTORS; i++) analogWrite(MOTORS[i], 0); }
 void writeToMotors(struct MotorOutput *motorvals) {
   zeroPWMvals(); 
-  analogWrite(motorvals->motor1_pin, motorvals->motor1_pwm); 
-  analogWrite(motorvals->motor2_pin, motorvals->motor2_pwm); 
+  //In testing I've found the motors don't start working until the PWM value reaches about 60
+  //Because we are writing a zero first we don't have to worry about 70 being too low and motors never switching off
+  analogWrite(motorvals->motor1_pin, map(motorvals->motor1_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
+  analogWrite(motorvals->motor2_pin, map(motorvals->motor2_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
   delay(PWM_DELAY);
 }
 
@@ -92,7 +95,7 @@ void loop() {
   //else a--;
   //if (a == 300) f=false;
   //if (a == 0) f=true;
-  Serial.print("Pot angle: " + (String)pot_angle);
+  //Serial.print("Pot angle: " + (String)pot_angle);
   //smooth the value out
   if (ENABLE_FILTERING) pot_angle = getFilteredHeading(pot_angle);
   //Get the output pins based on the angle
