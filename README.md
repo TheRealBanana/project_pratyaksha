@@ -1,4 +1,4 @@
-# project_pratyaksha
+# Project Pratyaksha
  Extra sensory perception via tactile stimulation
 
 
