@@ -3,7 +3,7 @@
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
 int MOTORS[NUM_MOTORS] = {3, 5, 6, 9, 10, 11}; //All 6 PWM pins on the Uno/Nano/Mini
-int MOTOR_PWM_MIN = 80; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
+int MOTOR_PWM_MIN = 100; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
 int MOTOR_PWM_MAX = 255; //Max range of our PWM output
 int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
 float PWM_DELAY = 1.0; //Trying to get rid of weird flickering now
@@ -22,7 +22,7 @@ float pot_percent = 0.0f;
 
 //My first idea for trying to smooth out the magnetic data
 //Take the average heading over the last buffer_size readings (rolling average).
-bool ENABLE_FILTERING = true;
+bool ENABLE_FILTERING = false;
 int buffer_size = 25;
 ArduinoQueue<int> heading_buffer(buffer_size);
 int heading_buffer_rolling_sum = 0;
@@ -82,19 +82,29 @@ void writeToMotors(struct MotorOutput *motorvals) {
 
 int a = 0;
 bool f = true;
+int d = 10;
 
 void loop() {
   struct MotorOutput motor_outputs; //Should be destroyed and recreated each loop iteration, not leaking.
   
   // Map the pot output from 0-1023 to 0-360
   pot_value = analogRead(POT_PIN);
-  //Serial.print("Pot value: " + (String)pot_value);
-  pot_angle = map(pot_value, 0, 1023, 0, 360);  
+  d = map(pot_value, 0, 1023, 1, 50);
+  //Serial.println("PWM: " + (String)MOTOR_PWM_MIN);
+  //Serial.println("Pot value: " + (String)pot_value);
+  //pot_angle = map(pot_value, 0, 1023, 0, 360);  
+  //BACK AND FORTH
   //pot_angle = a;
   //if (f) a++;
   //else a--;
   //if (a == 300) f=false;
   //if (a == 0) f=true;
+  //IN A CIRCLE TO THE RIGHT
+  pot_angle = a;
+  if (a == 360) a=0;
+  a++;
+  delay(d);
+  
   //Serial.print("Pot angle: " + (String)pot_angle);
   //smooth the value out
   if (ENABLE_FILTERING) pot_angle = getFilteredHeading(pot_angle);
