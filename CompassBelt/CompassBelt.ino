@@ -1,10 +1,14 @@
 // Ok here we go, the culmination of all the small test programs.
-
 #include <Wire.h>
 #include <Math.h>
 #include <DFRobot_QMC5883.h>
 #include <FreeSixIMU.h>
 #include <ArduinoQueue.h>
+
+int Rpin = 44;
+int Gpin = 45;
+int Bpin = 46;
+
 
 //IMU sensor data
 struct ID {
@@ -56,8 +60,8 @@ int mag_cal_duration = 15; //In seconds
 
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
-int MOTORS[NUM_MOTORS] = {3, 5, 6, 9, 10, 11}; //All 6 PWM pins on the Uno/Nano/Mini
-int MOTOR_PWM_MIN = 80; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
+int MOTORS[NUM_MOTORS] = {8, 9, 10, 5, 6, 7,}; //490hz only PWM pins on mega (not using 980hz on 4 and 13)
+int MOTOR_PWM_MIN = 100; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
 int MOTOR_PWM_MAX = 255; //Max range of our PWM output
 int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
 float PWM_DELAY = 1.0; //Trying to get rid of weird flickering now
@@ -84,7 +88,7 @@ int heading_buffer_rolling_sum = 0;
 //Calibrate our magnetometer for dur seconds
 void magcal(int dur) {  
   //Turn on red LED to indicate we are calibrating
-  //analogWrite(Rpin, 255);
+  analogWrite(Rpin, 255);
   //Calibrate for dur seconds
   for (int t=0; t<dur*10; t++) {
     //Figure out the min and max of our sensor on all three axis
@@ -124,17 +128,17 @@ void magcal(int dur) {
   int m = (abs(mag_min[0]) + abs(mag_min[1]) + abs(mag_min[2]) + mag_max[0] + mag_max[1] + mag_max[2])/6;
   if (ENABLE_AMBIENT_MIN_CAL) AMBIENT_MIN = m;
   //Indicate we are checking zero
-  //analogWrite(Bpin, 255);
+  analogWrite(Bpin, 255);
   delay(5000);
   mag = compass.readRaw();
   zmag_polarity_bias = mag.ZAxis;
   //Indicate we are done calibrating 
-  //analogWrite(Rpin, 0);
-  //analogWrite(Bpin, 0);
+  analogWrite(Rpin, 0);
+  analogWrite(Bpin, 0);
   delay(500);
-  //rgbflash(Rpin, 1);
-  //rgbflash(Gpin, 1);
-  //rgbflash(Bpin, 1);
+  rgbflash(Rpin, 1);
+  rgbflash(Gpin, 1);
+  rgbflash(Bpin, 1);
 }
 
 Vector applymagcal(Vector mag) {
@@ -233,8 +237,19 @@ struct ID getIMUData() {
   return returndata;
 }
 
+void rgbflash(int pin, int num) {
+  for (int i=0; i<num; i++) {
+    analogWrite(pin, 255);
+    delay(100);
+    analogWrite(pin, 0);
+    delay(100);
+  }
+}
+
 void setup() {
-  // put your setup code here, to run once:
+  analogWrite(Rpin, 0);
+  analogWrite(Gpin, 0);
+  analogWrite(Bpin, 0);
   Serial.begin(9600);
   // Loop through and set output mode on all MOTOR pins
   for (int i=0; i<6; i++) pinMode(MOTORS[i], OUTPUT);
