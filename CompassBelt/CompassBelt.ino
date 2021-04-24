@@ -48,6 +48,7 @@ bool ENABLE_AMBIENT_MIN_CAL = false; //Try and figure out a noise floor at start
 bool ENABLE_MAG_CALIBRATION = true;
 Vector mag = {0,0,0};
 int compass_angle = 0;
+int raw_compass_angle = 0;
 //Magnetic calibration using this page as a guide:
 // https://github.com/kriswiner/MPU6050/wiki/Simple-and-Effective-Magnetometer-Calibration
 int mag_bias[3] = {0,0,0};
@@ -80,10 +81,15 @@ float pot_percent = 0.0f;
 
 //My first idea for trying to smooth out the magnetic data
 //Take the average heading over the last buffer_size readings (rolling average).
-bool ENABLE_FILTERING = false;
+bool ENABLE_FILTERING = true;
 int buffer_size = 25;
-ArduinoQueue<int> heading_buffer(buffer_size);
-int heading_buffer_rolling_sum = 0;
+double sinheading = 0.0;
+double cosheading = 0.0;
+ArduinoQueue<double> sin_heading_buffer(buffer_size);
+ArduinoQueue<double> cos_heading_buffer(buffer_size);
+double sin_heading_buffer_rolling_sum = 0;
+double cos_heading_buffer_rolling_sum = 0;
+double atan_angle = 0;
 
 //Calibrate our magnetometer for dur seconds
 void magcal(int dur) {  
@@ -184,22 +190,37 @@ Vector correctHeadingWithIMU(Vector mag, struct ID * imudata) {
 
   return out;
 }
-
+//Having trouble using normal averaging when the angle is around 0/360
+//Taking the sin of the current angle will give us a smooth periodic value so there shouldnt be any swapping issues anywhere
+//Then we take the arcsine of the average of the sine values to get our filtered heading.
 int getFilteredHeading(int newheading) {
-  if (!heading_buffer.isFull()) {
-    heading_buffer.enqueue(newheading);
-    heading_buffer_rolling_sum += newheading;
+  sinheading = sin(degToRads(newheading)); 
+  cosheading = cos(degToRads(newheading)); 
+  if (!sin_heading_buffer.isFull() or !cos_heading_buffer.isFull()) {
+    sin_heading_buffer.enqueue(sinheading);
+    sin_heading_buffer_rolling_sum += sinheading;
+    cos_heading_buffer.enqueue(sinheading);
+    cos_heading_buffer_rolling_sum += sinheading;
     Serial.println(" - notfull returning last heading");
     return newheading;
   }
-  // Now that we have a full buffer of heading values, we take the average of them all
-  // Only two things that change are removing the oldest heading value and adding a new value
-  heading_buffer_rolling_sum -= heading_buffer.dequeue();
-  heading_buffer.enqueue(newheading);
-  heading_buffer_rolling_sum += newheading;
-  //Serial.println(" - AVG HEADING: " + (String)(heading_buffer_rolling_sum/buffer_size));
-  return heading_buffer_rolling_sum/buffer_size; 
+  // Now that we have a full buffer we take the average of all values and then take the arcsine of that value and return it
+  // Only two things that change are removing the oldest value and adding a new value
+  sin_heading_buffer_rolling_sum -= sin_heading_buffer.dequeue();
+  sin_heading_buffer.enqueue(sinheading);
+  sin_heading_buffer_rolling_sum += sinheading;
+  cos_heading_buffer_rolling_sum -= cos_heading_buffer.dequeue();
+  cos_heading_buffer.enqueue(cosheading);
+  cos_heading_buffer_rolling_sum += cosheading;
+  atan_angle = radsToDeg(atan2(sin_heading_buffer_rolling_sum/buffer_size, cos_heading_buffer_rolling_sum/buffer_size));
+  if (atan_angle < 0) atan_angle += 360; //shift the negative portion of our output to the right
+  Serial.println(" - AVG HEADING: " + (String)atan_angle);
+  return atan_angle; 
 }
+//Makes the math look cleaner and hopefully it doesnt drag performance down 
+double degToRads(int angle_in_degrees) { return angle_in_degrees*PI/180; } 
+int radsToDeg(double angle_in_rads) { return angle_in_rads * 180/PI; }
+
 int getCompassHeading(struct ID *imudata) {
   struct MD returndata;
   
@@ -305,7 +326,7 @@ void loop() {
   //Serial.print("Pot value: " + (String)pot_value);
   //pot_angle = map(pot_value, 0, 1023, 0, 360);  
   struct ID imudata = getIMUData();
-  compass_angle = getCompassHeading(&imudata);
+  raw_compass_angle = getCompassHeading(&imudata);
   //pot_angle = a;
   //if (f) a++;
   //else a--;
@@ -313,7 +334,8 @@ void loop() {
   //if (a == 0) f=true;
   //Serial.print("Pot angle: " + (String)pot_angle);
   //smooth the value out
-  if (ENABLE_FILTERING) compass_angle = getFilteredHeading(compass_angle);
+  if (ENABLE_FILTERING) compass_angle = getFilteredHeading(raw_compass_angle);
+  else compass_angle = raw_compass_angle;
   //Get the output pins based on the angle
   getOutputPinsFromAngle(compass_angle, &motor_outputs);
   //Get the PWM values for those motors, interpolated between the two
