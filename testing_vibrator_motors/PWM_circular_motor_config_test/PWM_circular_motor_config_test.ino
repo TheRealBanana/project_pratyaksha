@@ -2,7 +2,7 @@
 
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
-int MOTORS[NUM_MOTORS] = {3, 5, 6, 9, 10, 11}; //All 6 PWM pins on the Uno/Nano/Mini
+int MOTORS[NUM_MOTORS] = {5, 6, 7, 8, 9, 10}; //Using Mega now, normal PWM pins
 int MOTOR_PWM_MIN = 100; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
 int MOTOR_PWM_MAX = 255; //Max range of our PWM output
 int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
@@ -22,26 +22,47 @@ float pot_percent = 0.0f;
 
 //My first idea for trying to smooth out the magnetic data
 //Take the average heading over the last buffer_size readings (rolling average).
-bool ENABLE_FILTERING = false;
+bool ENABLE_FILTERING = true;
 int buffer_size = 25;
-ArduinoQueue<int> heading_buffer(buffer_size);
-int heading_buffer_rolling_sum = 0;
+//Arctan/tan alone didnt seem to work so I had to go with atan2 which requires cos and sin components
+double sinheading = 0.0;
+double cosheading = 0.0;
+int angle = 0;
+ArduinoQueue<double> sin_heading_buffer(buffer_size);
+ArduinoQueue<double> cos_heading_buffer(buffer_size);
+double sin_heading_buffer_rolling_sum = 0;
+double cos_heading_buffer_rolling_sum = 0;
 
+//Having trouble using normal averaging when the angle is around 0/360
+//Taking the sin of the current angle will give us a smooth periodic value so there shouldnt be any swapping issues anywhere
+//Then we take the arcsine of the average of the sine values to get our filtered heading.
 int getFilteredHeading(int newheading) {
-  if (!heading_buffer.isFull()) {
-    heading_buffer.enqueue(newheading);
-    heading_buffer_rolling_sum += newheading;
+  sinheading = sin(degToRads(newheading)); 
+  cosheading = cos(degToRads(newheading)); 
+  if (!sin_heading_buffer.isFull() or !cos_heading_buffer.isFull()) {
+    sin_heading_buffer.enqueue(sinheading);
+    sin_heading_buffer_rolling_sum += sinheading;
+    cos_heading_buffer.enqueue(sinheading);
+    cos_heading_buffer_rolling_sum += sinheading;
     Serial.println(" - notfull returning last heading");
     return newheading;
   }
-  // Now that we have a full buffer of heading values, we take the average of them all
-  // Only two things that change are removing the oldest heading value and adding a new value
-  heading_buffer_rolling_sum -= heading_buffer.dequeue();
-  heading_buffer.enqueue(newheading);
-  heading_buffer_rolling_sum += newheading;
-  Serial.println(" - AVG HEADING: " + (String)(heading_buffer_rolling_sum/buffer_size));
-  return heading_buffer_rolling_sum/buffer_size; 
+  // Now that we have a full buffer we take the average of all values and then take the arcsine of that value and return it
+  // Only two things that change are removing the oldest value and adding a new value
+  sin_heading_buffer_rolling_sum -= sin_heading_buffer.dequeue();
+  sin_heading_buffer.enqueue(sinheading);
+  sin_heading_buffer_rolling_sum += sinheading;
+  cos_heading_buffer_rolling_sum -= cos_heading_buffer.dequeue();
+  cos_heading_buffer.enqueue(cosheading);
+  cos_heading_buffer_rolling_sum += cosheading;
+  angle = radsToDeg(atan2(sin_heading_buffer_rolling_sum/buffer_size, cos_heading_buffer_rolling_sum/buffer_size));
+  if (angle < 0) angle += 360; //shift the negative portion of our output to the right
+  Serial.println(" - AVG HEADING: " + (String)angle);
+  return angle; 
 }
+//Makes the math look cleaner and hopefully it doesnt drag performance down 
+double degToRads(int angle_in_degrees) { return angle_in_degrees*PI/180; } 
+int radsToDeg(double angle_in_rads) { return angle_in_rads * 180/PI; }
 
 void setup() {
   // put your setup code here, to run once:
@@ -89,10 +110,10 @@ void loop() {
   
   // Map the pot output from 0-1023 to 0-360
   pot_value = analogRead(POT_PIN);
-  d = map(pot_value, 0, 1023, 1, 50);
+  //d = map(pot_value, 0, 1023, 1, 50);
   //Serial.println("PWM: " + (String)MOTOR_PWM_MIN);
-  //Serial.println("Pot value: " + (String)pot_value);
-  //pot_angle = map(pot_value, 0, 1023, 0, 360);  
+  Serial.print("Pot value: " + (String)pot_value);
+  pot_angle = map(pot_value, 0, 1023, 0, 360);  
   //BACK AND FORTH
   //pot_angle = a;
   //if (f) a++;
@@ -100,10 +121,10 @@ void loop() {
   //if (a == 300) f=false;
   //if (a == 0) f=true;
   //IN A CIRCLE TO THE RIGHT
-  pot_angle = a;
-  if (a == 360) a=0;
-  a++;
-  delay(d);
+  //pot_angle = a;
+  //if (a == 360) a=0;
+  //a++;
+  //delay(d);
   
   //Serial.print("Pot angle: " + (String)pot_angle);
   //smooth the value out
@@ -113,5 +134,5 @@ void loop() {
   //Get the PWM values for those motors, interpolated between the two
   interpFromAngle(pot_angle, &motor_outputs);
   //We should now have everything we need to output the correct PWM value to the correct pin
-  writeToMotors(&motor_outputs);
+  //writeToMotors(&motor_outputs);
 }
