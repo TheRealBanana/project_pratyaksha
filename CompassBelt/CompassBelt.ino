@@ -323,6 +323,7 @@ void loop() {
   
   // Map the pot output from 0-1023 to 0-360
   pot_value = analogRead(POT_PIN);
+  MOTOR_PWM_MAX = map(pot_value, 0, 1023, 0, 255);
   //Serial.print("Pot value: " + (String)pot_value);
   //pot_angle = map(pot_value, 0, 1023, 0, 360);  
   struct ID imudata = getIMUData();
