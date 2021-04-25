@@ -191,20 +191,20 @@ Vector correctHeadingWithIMU(Vector mag, struct ID * imudata) {
   return out;
 }
 //Having trouble using normal averaging when the angle is around 0/360
-//Taking the sin of the current angle will give us a smooth periodic value so there shouldnt be any swapping issues anywhere
-//Then we take the arcsine of the average of the sine values to get our filtered heading.
+//Taking the sin and cosine of the current angle will give us a smooth periodic value so there shouldnt be any swapping issues anywhere
+//Then we take the atan2 of the average of the sine/cosine values to get our filtered heading.
 int getFilteredHeading(int newheading) {
   sinheading = sin(degToRads(newheading)); 
   cosheading = cos(degToRads(newheading)); 
   if (!sin_heading_buffer.isFull() or !cos_heading_buffer.isFull()) {
     sin_heading_buffer.enqueue(sinheading);
     sin_heading_buffer_rolling_sum += sinheading;
-    cos_heading_buffer.enqueue(sinheading);
-    cos_heading_buffer_rolling_sum += sinheading;
+    cos_heading_buffer.enqueue(cosheading);
+    cos_heading_buffer_rolling_sum += cosheading;
     Serial.println(" - notfull returning last heading");
     return newheading;
   }
-  // Now that we have a full buffer we take the average of all values and then take the arcsine of that value and return it
+  // Now that we have a full buffer we take the average of all values and then take the atan2 of that value and return it
   // Only two things that change are removing the oldest value and adding a new value
   sin_heading_buffer_rolling_sum -= sin_heading_buffer.dequeue();
   sin_heading_buffer.enqueue(sinheading);
@@ -267,6 +267,32 @@ void rgbflash(int pin, int num) {
   }
 }
 
+void getOutputPinsFromAngle(int angle, struct MotorOutput *motorvals) {
+  angle = constrain(angle, 0, 360);
+  motorpin_index = angle/MOTOR_ANGLE;
+  if (motorpin_index < 0) motorpin_index = NUM_MOTORS - 1;
+  else if (motorpin_index == NUM_MOTORS) motorpin_index = 0;
+  motorvals->motor1_pin = MOTORS[motorpin_index];
+  if (motorpin_index == NUM_MOTORS-1) motorvals->motor2_pin = MOTORS[0];
+  else motorvals->motor2_pin = MOTORS[motorpin_index+1];
+}
+
+struct MotorOutput interpFromAngle(int angle, struct MotorOutput *motorvals){ 
+  float ratio = 1.0 - ((float)(angle%MOTOR_ANGLE)/(float)MOTOR_ANGLE);
+  motorvals->motor1_pwm = (int)(ratio * MOTOR_PWM_MAX);
+  motorvals->motor2_pwm = MOTOR_PWM_MAX - motorvals->motor1_pwm;
+}
+
+void zeroPWMvals() { for (int i=0; i<NUM_MOTORS; i++) analogWrite(MOTORS[i], 0); }
+void writeToMotors(struct MotorOutput *motorvals) {
+  zeroPWMvals(); 
+  //In testing I've found the motors don't start working until the PWM value reaches about 60
+  //Because we are writing a zero first we don't have to worry about 60 being too low and motors never switching off
+  analogWrite(motorvals->motor1_pin, map(motorvals->motor1_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
+  analogWrite(motorvals->motor2_pin, map(motorvals->motor2_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
+  delay(PWM_DELAY);
+}
+
 void setup() {
   analogWrite(Rpin, 0);
   analogWrite(Gpin, 0);
@@ -285,55 +311,14 @@ void setup() {
   compass.setDeclinationAngle(declinationAngle);
 }
 
-void getOutputPinsFromAngle(int angle, struct MotorOutput *motorvals) {
-  angle = constrain(angle, 0, 360);
-  motorpin_index = angle/MOTOR_ANGLE;// - 1;
-  //Serial.print("  |  motorpin_index 1: " + (String)motorpin_index);
-  if (motorpin_index < 0) motorpin_index = NUM_MOTORS - 1;
-  else if (motorpin_index == NUM_MOTORS) motorpin_index = 0;
-  motorvals->motor1_pin = MOTORS[motorpin_index];
-  //Serial.print("  |  motorpin_index 2: " + (String)motorpin_index);
-  if (motorpin_index == NUM_MOTORS-1) motorvals->motor2_pin = MOTORS[0];
-  else motorvals->motor2_pin = MOTORS[motorpin_index+1];
-  //Serial.print("  |  Motor pins: " + (String)motorvals->motor1_pin + " - " + (String)motorvals->motor2_pin);
-}
-
-struct MotorOutput interpFromAngle(int angle, struct MotorOutput *motorvals){ 
-  float ratio = 1.0 - ((float)(angle%MOTOR_ANGLE)/(float)MOTOR_ANGLE);
-  motorvals->motor1_pwm = (int)(ratio * MOTOR_PWM_MAX);
-  motorvals->motor2_pwm = MOTOR_PWM_MAX - motorvals->motor1_pwm;
-  //Serial.println("  |  Motor PWM vals: " + (String)motorvals->motor1_pwm + " - " + (String)motorvals->motor2_pwm);
-}
-
-void zeroPWMvals() { for (int i=0; i<NUM_MOTORS; i++) analogWrite(MOTORS[i], 0); }
-void writeToMotors(struct MotorOutput *motorvals) {
-  zeroPWMvals(); 
-  //In testing I've found the motors don't start working until the PWM value reaches about 60
-  //Because we are writing a zero first we don't have to worry about 70 being too low and motors never switching off
-  analogWrite(motorvals->motor1_pin, map(motorvals->motor1_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
-  analogWrite(motorvals->motor2_pin, map(motorvals->motor2_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
-  delay(PWM_DELAY);
-}
-
-int a = 0;
-bool f = true;
-
 void loop() {
   struct MotorOutput motor_outputs; //Should be destroyed and recreated each loop iteration, not leaking.
   
   // Map the pot output from 0-1023 to 0-360
   pot_value = analogRead(POT_PIN);
   MOTOR_PWM_MAX = map(pot_value, 0, 1023, 0, 255);
-  //Serial.print("Pot value: " + (String)pot_value);
-  //pot_angle = map(pot_value, 0, 1023, 0, 360);  
   struct ID imudata = getIMUData();
   raw_compass_angle = getCompassHeading(&imudata);
-  //pot_angle = a;
-  //if (f) a++;
-  //else a--;
-  //if (a == 300) f=false;
-  //if (a == 0) f=true;
-  //Serial.print("Pot angle: " + (String)pot_angle);
   //smooth the value out
   if (ENABLE_FILTERING) compass_angle = getFilteredHeading(raw_compass_angle);
   else compass_angle = raw_compass_angle;
