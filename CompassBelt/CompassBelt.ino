@@ -58,6 +58,7 @@ int mag_min[3] = {32767,32767,32767};
 int mag_temp[3] = {0,0,0};
 int zmag_polarity_bias = 0;
 int mag_cal_duration = 15; //In seconds
+int mag_heading_offset = 0; // How far off is the sensor's current orientation from true north? Cant perfectly aligning the sensor's north with our body so why try.
 
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
@@ -221,6 +222,12 @@ int getFilteredHeading(int newheading) {
 double degToRads(int angle_in_degrees) { return angle_in_degrees*PI/180; } 
 int radsToDeg(double angle_in_rads) { return angle_in_rads * 180/PI; }
 
+//This function will either be called at the end of magcal or on a button press.
+void setCompassOffset(Vector * mag) {
+  if (mag->HeadingDegress <= 180) mag_heading_offset = -mag->HeadingDegress;
+  else mag_heading_offset = 360-mag->HeadingDegress;
+}
+
 int getCompassHeading(struct ID *imudata) {
   struct MD returndata;
   
@@ -232,7 +239,9 @@ int getCompassHeading(struct ID *imudata) {
   mag.ZAxis = constrain(mag.ZAxis, SENSOR_MIN, SENSOR_MAX);
   //Apply tilt compensation and our calibration factors to the magnetic data
   mag = correctHeadingWithIMU(mag, imudata);
-  Serial.println(mag.HeadingDegress);
+  //Correct for alignment of sensor
+  mag.HeadingDegress += mag_heading_offset;
+  Serial.println(360-mag.HeadingDegress);
   return 360-mag.HeadingDegress;
 };
 
