@@ -281,7 +281,7 @@ void beltPulseIndicator(int count, bool fastmode) {
     analogWrite(MOTORS[3], 255);
     if (fastmode) delay(50);
     else delay(150);
-    analogWrite(MOTORS[2], 0);
+    analogWrite(MOTORS[3], 0);
   }  
 }
 void rgbflash(int pin, int num) {
