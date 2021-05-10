@@ -58,7 +58,7 @@ int mag_min[3] = {32767,32767,32767};
 int mag_temp[3] = {0,0,0};
 int zmag_polarity_bias = 0;
 int mag_cal_duration = 15; //In seconds
-int ZERO_WAIT_DELAY = 5; //How long do we wait before we take the zero-heading reading?
+int ZERO_WAIT_DELAY = 6; //How long do we wait before we take the zero-heading reading?
 int mag_heading_offset = 0; // How far off is the sensor's current orientation from true north? Cant perfectly aligning the sensor's north with our body so why try.
 
 
@@ -139,15 +139,16 @@ void magcal(int dur) {
   if (ENABLE_AMBIENT_MIN_CAL) AMBIENT_MIN = m;
   //Indicate we are checking zero/aligning north pole with blue light and two fast pulses
   analogWrite(Bpin, 255);
-  beltPulseIndicator(2, true);
-  delay(ZERO_WAIT_DELAY);
+  beltPulseIndicator(3, false);
+  delay(ZERO_WAIT_DELAY*1000);
+  setCompassOffset();
   mag = compass.readRaw();
   zmag_polarity_bias = mag.ZAxis;
   //Indicate we are done calibrating 
   analogWrite(Rpin, 0);
   analogWrite(Bpin, 0);
   delay(500);
-  beltPulseIndicator(3, false);
+  beltPulseIndicator(2, false);
   rgbflash(Rpin, 1);
   rgbflash(Gpin, 1);
   rgbflash(Bpin, 1);
@@ -228,9 +229,12 @@ double degToRads(int angle_in_degrees) { return angle_in_degrees*PI/180; }
 int radsToDeg(double angle_in_rads) { return angle_in_rads * 180/PI; }
 
 //This function will either be called at the end of magcal or on a button press.
-void setCompassOffset(Vector * mag) {
-  if (mag->HeadingDegress <= 180) mag_heading_offset = -mag->HeadingDegress;
-  else mag_heading_offset = 360-mag->HeadingDegress;
+void setCompassOffset() {
+  //Need to get an accurate heading to set the offset so we need IMU data here
+  struct ID imudata = getIMUData();
+  raw_compass_angle = getCompassHeading(&imudata);
+  if (raw_compass_angle <= 180) mag_heading_offset = -raw_compass_angle;
+  else mag_heading_offset = 360-raw_compass_angle;
 }
 
 int getCompassHeading(struct ID *imudata) {
@@ -282,6 +286,7 @@ void beltPulseIndicator(int count, bool fastmode) {
     if (fastmode) delay(50);
     else delay(150);
     analogWrite(MOTORS[3], 0);
+    delay(300);
   }  
 }
 void rgbflash(int pin, int num) {
