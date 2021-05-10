@@ -58,7 +58,9 @@ int mag_min[3] = {32767,32767,32767};
 int mag_temp[3] = {0,0,0};
 int zmag_polarity_bias = 0;
 int mag_cal_duration = 15; //In seconds
+int ZERO_WAIT_DELAY = 5; //How long do we wait before we take the zero-heading reading?
 int mag_heading_offset = 0; // How far off is the sensor's current orientation from true north? Cant perfectly aligning the sensor's north with our body so why try.
+
 
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
@@ -94,8 +96,9 @@ double atan_angle = 0;
 
 //Calibrate our magnetometer for dur seconds
 void magcal(int dur) {  
-  //Turn on red LED to indicate we are calibrating
+  //Turn on red LED to indicate we are calibrating and give two long pulses of the belt
   analogWrite(Rpin, 255);
+  beltPulseIndicator(2, false);
   //Calibrate for dur seconds
   for (int t=0; t<dur*10; t++) {
     //Figure out the min and max of our sensor on all three axis
@@ -134,15 +137,17 @@ void magcal(int dur) {
   //Or maybe add up all the mins and maxes and take the average?
   int m = (abs(mag_min[0]) + abs(mag_min[1]) + abs(mag_min[2]) + mag_max[0] + mag_max[1] + mag_max[2])/6;
   if (ENABLE_AMBIENT_MIN_CAL) AMBIENT_MIN = m;
-  //Indicate we are checking zero
+  //Indicate we are checking zero/aligning north pole with blue light and two fast pulses
   analogWrite(Bpin, 255);
-  delay(5000);
+  beltPulseIndicator(2, true);
+  delay(ZERO_WAIT_DELAY);
   mag = compass.readRaw();
   zmag_polarity_bias = mag.ZAxis;
   //Indicate we are done calibrating 
   analogWrite(Rpin, 0);
   analogWrite(Bpin, 0);
   delay(500);
+  beltPulseIndicator(3, false);
   rgbflash(Rpin, 1);
   rgbflash(Gpin, 1);
   rgbflash(Bpin, 1);
@@ -266,7 +271,19 @@ struct ID getIMUData() {
 
   return returndata;
 }
-
+// Instead of the visual indicator I'm going to use the belt to signal states
+// Temporary until I can get v2 of the PCB designed and built, which will include the status LED.
+void beltPulseIndicator(int count, bool fastmode) {
+  for (int i=0; i<count; i++) {
+    //I think index 3 is the motor on the belly of the belt
+    //Maybe doing the 4 corners (F B L R) would be better? Less ambiguous since in normal operaton
+    //the belt cant activate more than 2 motors at once. 
+    analogWrite(MOTORS[3], 255);
+    if (fastmode) delay(50);
+    else delay(150);
+    analogWrite(MOTORS[2], 0);
+  }  
+}
 void rgbflash(int pin, int num) {
   for (int i=0; i<num; i++) {
     analogWrite(pin, 255);
@@ -301,6 +318,7 @@ void writeToMotors(struct MotorOutput *motorvals) {
   analogWrite(motorvals->motor2_pin, map(motorvals->motor2_pwm, 0, 255, MOTOR_PWM_MIN, MOTOR_PWM_MAX)); 
   delay(PWM_DELAY);
 }
+
 
 void setup() {
   analogWrite(Rpin, 0);
