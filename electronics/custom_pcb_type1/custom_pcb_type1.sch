@@ -200,48 +200,11 @@ Wire Wire Line
 Wire Wire Line
 	5500 1150 5300 1150
 Wire Wire Line
-	4250 1150 4250 3600
-Wire Wire Line
-	4150 5000 4150 5650
-Wire Wire Line
-	4150 5650 6300 5650
-Wire Wire Line
-	6300 5650 6300 1500
-Wire Wire Line
 	7100 1150 7100 1300
-Wire Wire Line
-	7100 1600 4150 1600
-Wire Wire Line
-	4150 1600 4150 3600
 Wire Wire Line
 	7900 1150 7900 1300
 Wire Wire Line
-	7900 5800 4050 5800
-Wire Wire Line
-	4050 5800 4050 5000
-Wire Wire Line
-	4050 3600 4050 1800
-Wire Wire Line
-	4050 1800 8700 1800
-Wire Wire Line
-	8700 1800 8700 1500
-Wire Wire Line
 	9500 1150 9500 1300
-Wire Wire Line
-	9500 5950 3950 5950
-Wire Wire Line
-	3950 5950 3950 5000
-$Comp
-L Device:LED_RGBC D1
-U 1 1 60A5A4AE
-P 1300 6000
-F 0 "D1" H 1300 6497 50  0000 C CNN
-F 1 "LED_RGBC" H 1300 6406 50  0000 C CNN
-F 2 "LED_THT:LED_D5.0mm-4_RGB_Staggered_Pins" H 1300 5950 50  0001 C CNN
-F 3 "~" H 1300 5950 50  0001 C CNN
-	1    1300 6000
-	1    0    0    -1  
-$EndComp
 $Comp
 L power:GND #PWR0103
 U 1 1 60A5E63F
@@ -286,8 +249,6 @@ F 3 "~" H 5200 1150 50  0001 C CNN
 	1    5200 1150
 	0    1    1    0   
 $EndComp
-Wire Wire Line
-	5100 1150 4250 1150
 $Comp
 L Device:R_Small_US R5
 U 1 1 60A74DD6
@@ -312,8 +273,6 @@ F 3 "~" H 7100 1400 50  0001 C CNN
 	1    7100 1400
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	7100 1500 7100 1600
 $Comp
 L Device:R_Small_US R7
 U 1 1 60A77EA0
@@ -325,8 +284,6 @@ F 3 "~" H 7900 1400 50  0001 C CNN
 	1    7900 1400
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	7900 1500 7900 5800
 $Comp
 L Device:R_Small_US R8
 U 1 1 60A7A027
@@ -351,8 +308,6 @@ F 3 "~" H 9500 1400 50  0001 C CNN
 	1    9500 1400
 	1    0    0    -1  
 $EndComp
-Wire Wire Line
-	9500 1500 9500 5950
 $Comp
 L Device:R_Small_US R1
 U 1 1 60A7B977
@@ -518,25 +473,6 @@ F 3 "~" H 2400 2500 50  0001 C CNN
 	1    2400 2500
 	1    0    0    -1  
 $EndComp
-$Comp
-L power:GND #PWR0108
-U 1 1 60AD6507
-P 3650 2500
-F 0 "#PWR0108" H 3650 2250 50  0001 C CNN
-F 1 "GND" H 3655 2327 50  0000 C CNN
-F 2 "" H 3650 2500 50  0001 C CNN
-F 3 "" H 3650 2500 50  0001 C CNN
-	1    3650 2500
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2600 2500 3650 2500
-Wire Wire Line
-	2600 2600 3450 2600
-Wire Wire Line
-	3450 2600 3450 3600
-Wire Wire Line
-	2600 2700 6150 2700
 Wire Wire Line
 	6150 2700 6150 5250
 Wire Wire Line
@@ -547,43 +483,6 @@ Text Label 2250 2700 0    50   ~ 0
 SDA
 Text Label 2250 2600 0    50   ~ 0
 SCL
-$Comp
-L power:+5V #PWR0109
-U 1 1 60AFB188
-P 3650 2400
-F 0 "#PWR0109" H 3650 2250 50  0001 C CNN
-F 1 "+5V" H 3665 2573 50  0000 C CNN
-F 2 "" H 3650 2400 50  0001 C CNN
-F 3 "" H 3650 2400 50  0001 C CNN
-	1    3650 2400
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3650 2400 2600 2400
-$Comp
-L Switch:SW_MEC_5G SW1
-U 1 1 60B02D94
-P 5250 2950
-F 0 "SW1" V 5296 2902 50  0000 R CNN
-F 1 "RST_SW" V 5205 2902 50  0000 R CNN
-F 2 "Button_Switch_THT:SW_PUSH_6mm" H 5250 3150 50  0001 C CNN
-F 3 "http://www.apem.com/int/index.php?controller=attachment&id_attachment=488" H 5250 3150 50  0001 C CNN
-	1    5250 2950
-	0    -1   -1   0   
-$EndComp
-$Comp
-L power:GND #PWR0110
-U 1 1 60B063B5
-P 5250 2750
-F 0 "#PWR0110" H 5250 2500 50  0001 C CNN
-F 1 "GND" H 5255 2577 50  0000 C CNN
-F 2 "" H 5250 2750 50  0001 C CNN
-F 3 "" H 5250 2750 50  0001 C CNN
-	1    5250 2750
-	1    0    0    1   
-$EndComp
-Wire Wire Line
-	5250 3150 5250 3600
 $Comp
 L Connector:USB_B J4
 U 1 1 609CD78C
@@ -629,4 +528,97 @@ NoConn ~ 2300 1250
 NoConn ~ 2300 1450
 Text Label 2450 1650 1    50   ~ 0
 JMPR_TO_ATMEGA
+$Comp
+L power:GND #PWR01
+U 1 1 609EAE83
+P 5250 2950
+F 0 "#PWR01" H 5250 2700 50  0001 C CNN
+F 1 "GND" H 5255 2777 50  0000 C CNN
+F 2 "" H 5250 2950 50  0001 C CNN
+F 3 "" H 5250 2950 50  0001 C CNN
+	1    5250 2950
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	5250 2950 5250 3050
+Wire Wire Line
+	5250 3450 5250 3600
+$Comp
+L Switch:SW_Push SW1
+U 1 1 60A27432
+P 5250 3250
+F 0 "SW1" V 5204 3398 50  0000 L CNN
+F 1 "RST_SW" V 5295 3398 50  0000 L CNN
+F 2 "Button_Switch_THT:SW_PUSH_6mm" H 5250 3450 50  0001 C CNN
+F 3 "~" H 5250 3450 50  0001 C CNN
+	1    5250 3250
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:LED_RGBC_GND2 D1
+U 1 1 60A5A4AE
+P 1300 6000
+F 0 "D1" H 1300 6497 50  0000 C CNN
+F 1 "LED_RGBC" H 1300 6406 50  0000 C CNN
+F 2 "LED_THT:LED_D5.0mm-4_RGB" H 1300 5950 50  0001 C CNN
+F 3 "~" H 1300 5950 50  0001 C CNN
+	1    1300 6000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9500 1500 9500 5050
+Wire Wire Line
+	9500 5050 4350 5050
+Wire Wire Line
+	4350 5050 4350 5000
+Wire Wire Line
+	4250 5000 4300 5000
+Wire Wire Line
+	4300 5000 4300 4950
+Wire Wire Line
+	4300 4950 8700 4950
+Wire Wire Line
+	8700 4950 8700 1500
+Wire Wire Line
+	7900 1500 7900 5100
+Wire Wire Line
+	7900 5100 4150 5100
+Wire Wire Line
+	4150 5100 4150 5000
+Wire Wire Line
+	4050 5000 4050 5150
+Wire Wire Line
+	4050 5150 7100 5150
+Wire Wire Line
+	7100 5150 7100 1500
+Wire Wire Line
+	6300 1500 6300 5350
+Wire Wire Line
+	6300 5350 3950 5350
+Wire Wire Line
+	3950 5350 3950 5000
+Wire Wire Line
+	3850 5000 3850 5500
+Wire Wire Line
+	3850 5500 5100 5500
+Wire Wire Line
+	5100 5500 5100 1150
+Wire Wire Line
+	2600 2700 6150 2700
+Wire Wire Line
+	3450 2600 3450 3600
+Wire Wire Line
+	2600 2600 3450 2600
+Wire Wire Line
+	2600 2400 5600 2400
+Wire Wire Line
+	5600 2400 5600 5000
+Wire Wire Line
+	5600 5000 5550 5000
+Wire Wire Line
+	2600 2500 900  2500
+Wire Wire Line
+	900  2500 900  5000
+Wire Wire Line
+	900  5000 850  5000
 $EndSCHEMATC
