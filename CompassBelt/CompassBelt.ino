@@ -67,7 +67,9 @@ int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapp
 int MOTORS[NUM_MOTORS] = {8, 9, 10, 5, 6, 7,}; //490hz only PWM pins on mega (not using 980hz on 4 and 13)
 int MOTOR_PWM_MIN = 100; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
 int MOTOR_PWM_MAX = 255; //Max range of our PWM output
-int POT_PIN = A0; //Dont have to set to input pinmode to do analogRead()
+int INTENSITY_ADJUST_POT_PIN = A0; // For changing the intensity of vibrations (PWM MAX)
+int FILTER_SIZE_POT_PIN = A1; // For changing the size of the heading filter buffer
+int MANUAL_HEADING_OFFSET_POT = A2; // For manually adjusting the heading offset value
 float PWM_DELAY = 1.0; //Trying to get rid of weird flickering now
 
 struct MotorOutput {
