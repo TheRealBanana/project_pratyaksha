@@ -1,3 +1,4 @@
 (sym_lib_table
   (lib (name custom_pcb_type1-cache)(type Legacy)(uri ${KIPRJMOD}/custom_pcb_type1-cache.lib)(options "")(descr ""))
+  (lib (name custom_pcb_type1-rescue)(type Legacy)(uri ${KIPRJMOD}/custom_pcb_type1-rescue.lib)(options "")(descr ""))
 )

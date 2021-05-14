@@ -14,7 +14,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L Transistor_BJT:2N2222 Q2
+L custom_pcb_type1-rescue:2N2222-Transistor_BJT Q2
 U 1 1 609EAC55
 P 6500 1150
 F 0 "Q2" H 6690 1196 50  0000 L CNN
@@ -25,7 +25,7 @@ F 3 "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF" H 6500 1150 50  0001 L 
 	1    0    0    -1  
 $EndComp
 $Comp
-L Transistor_BJT:2N2222 Q3
+L custom_pcb_type1-rescue:2N2222-Transistor_BJT Q3
 U 1 1 609EB0CD
 P 7300 1150
 F 0 "Q3" H 7490 1196 50  0000 L CNN
@@ -36,7 +36,7 @@ F 3 "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF" H 7300 1150 50  0001 L 
 	1    0    0    -1  
 $EndComp
 $Comp
-L Transistor_BJT:2N2222 Q4
+L custom_pcb_type1-rescue:2N2222-Transistor_BJT Q4
 U 1 1 609EBA66
 P 8100 1150
 F 0 "Q4" H 8290 1196 50  0000 L CNN
@@ -58,7 +58,7 @@ F 3 "" H 4350 750 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L MEGA_PRO_EMBED_CH340G___ATMEGA2560:MEGA_PRO_EMBED_CH340G___ATMEGA2560 U1
+L custom_pcb_type1-rescue:MEGA_PRO_EMBED_CH340G___ATMEGA2560-MEGA_PRO_EMBED_CH340G___ATMEGA2560 U1
 U 1 1 609C607E
 P 3250 4300
 F 0 "U1" V 3204 1770 50  0000 R CNN
@@ -73,7 +73,7 @@ F 7 "Manufacturer Recommendations" H 3250 4300 50  0001 L BNN "STANDARD"
 	0    1    1    0   
 $EndComp
 $Comp
-L Transistor_BJT:2N2222 Q5
+L custom_pcb_type1-rescue:2N2222-Transistor_BJT Q5
 U 1 1 609ECC79
 P 8900 1150
 F 0 "Q5" H 9090 1196 50  0000 L CNN
@@ -84,7 +84,7 @@ F 3 "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF" H 8900 1150 50  0001 L 
 	1    0    0    -1  
 $EndComp
 $Comp
-L Transistor_BJT:2N2222 Q6
+L custom_pcb_type1-rescue:2N2222-Transistor_BJT Q6
 U 1 1 609F368F
 P 9700 1150
 F 0 "Q6" H 9890 1196 50  0000 L CNN
@@ -95,7 +95,7 @@ F 3 "https://www.onsemi.com/pub/Collateral/2N3903-D.PDF" H 9700 1150 50  0001 L 
 	1    0    0    -1  
 $EndComp
 $Comp
-L Transistor_BJT:2N2222 Q1
+L custom_pcb_type1-rescue:2N2222-Transistor_BJT Q1
 U 1 1 609EA32B
 P 5700 1150
 F 0 "Q1" H 5890 1196 50  0000 L CNN
@@ -517,17 +517,9 @@ F 3 "" H 1450 1100 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	2300 1300 2300 1250
-Wire Wire Line
 	1450 1300 2300 1300
 Wire Wire Line
 	1450 1400 2300 1400
-Wire Wire Line
-	2300 1400 2300 1450
-NoConn ~ 2300 1250
-NoConn ~ 2300 1450
-Text Label 2450 1650 1    50   ~ 0
-JMPR_TO_ATMEGA
 $Comp
 L power:GND #PWR01
 U 1 1 609EAE83
@@ -555,7 +547,7 @@ F 3 "~" H 5250 3450 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Device:LED_RGBC_GND2 D1
+L custom_pcb_type1-rescue:LED_RGBC_GND2-Device D1
 U 1 1 60A5A4AE
 P 1300 6000
 F 0 "D1" H 1300 6497 50  0000 C CNN
@@ -621,4 +613,15 @@ Wire Wire Line
 	900  2500 900  5000
 Wire Wire Line
 	900  5000 850  5000
+$Comp
+L Connector:Conn_01x02_Male J5
+U 1 1 60A08FAC
+P 2500 1400
+F 0 "J5" H 2472 1282 50  0000 R CNN
+F 1 "JMPR_TO_ATMEGA" H 2472 1373 50  0000 R CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Horizontal" H 2500 1400 50  0001 C CNN
+F 3 "~" H 2500 1400 50  0001 C CNN
+	1    2500 1400
+	-1   0    0    1   
+$EndComp
 $EndSCHEMATC
