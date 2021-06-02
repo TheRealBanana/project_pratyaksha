@@ -15,7 +15,7 @@ struct MotorOutput {
   int motor2_pwm;
 };
 
-int motorpin_index;
+int motorpin_index = 0;
 int pot_value = 0;
 int pot_angle = 0;
 float pot_percent = 0.0f;
@@ -134,5 +134,5 @@ void loop() {
   //Get the PWM values for those motors, interpolated between the two
   interpFromAngle(pot_angle, &motor_outputs);
   //We should now have everything we need to output the correct PWM value to the correct pin
-  //writeToMotors(&motor_outputs);
+  writeToMotors(&motor_outputs);
 }

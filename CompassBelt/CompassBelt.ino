@@ -5,9 +5,10 @@
 #include <FreeSixIMU.h>
 #include <ArduinoQueue.h>
 
-int Rpin = 44;
-int Gpin = 45;
-int Bpin = 46;
+int Rpin = 46;
+int Gpin = 44;
+int Bpin = 45;
+
 
 
 //IMU sensor data
@@ -64,12 +65,13 @@ int mag_heading_offset = 0; // How far off is the sensor's current orientation f
 
 const int NUM_MOTORS = 6;
 int MOTOR_ANGLE = (360/NUM_MOTORS); //Number of degrees between motors when mapped to a circle
-int MOTORS[NUM_MOTORS] = {8, 9, 10, 5, 6, 7,}; //490hz only PWM pins on mega (not using 980hz on 4 and 13)
+// getOutputPinsFromAngle() returns index 0 when you give an angle of 0 or 360 (north). So straight forward should be index0 which should be the belly buzzer which should be the first motor on the belt (red motor). 
+int MOTORS[NUM_MOTORS] = {4, 2, 3, 5, 7, 9,}; //Pins are not sequential anymore since the custom PCB layout
 int MOTOR_PWM_MIN = 100; //Min value before the motor starts to move. Its actually 60 but you dont feel much until 70.
 int MOTOR_PWM_MAX = 255; //Max range of our PWM output
 int INTENSITY_ADJUST_POT_PIN = A0; // For changing the intensity of vibrations (PWM MAX)
 int FILTER_SIZE_POT_PIN = A1; // For changing the size of the heading filter buffer
-int MANUAL_HEADING_OFFSET_POT = A2; // For manually adjusting the heading offset value
+int MANUAL_HEADING_OFFSET_POT = A3; // For manually adjusting the heading offset value
 float PWM_DELAY = 1.0; //Trying to get rid of weird flickering now
 
 struct MotorOutput {
@@ -284,10 +286,10 @@ void beltPulseIndicator(int count, bool fastmode) {
     //I think index 3 is the motor on the belly of the belt
     //Maybe doing the 4 corners (F B L R) would be better? Less ambiguous since in normal operaton
     //the belt cant activate more than 2 motors at once. 
-    analogWrite(MOTORS[3], 255);
+    analogWrite(MOTORS[0], 255);
     if (fastmode) delay(50);
     else delay(150);
-    analogWrite(MOTORS[3], 0);
+    analogWrite(MOTORS[0], 0);
     delay(300);
   }  
 }
@@ -303,7 +305,7 @@ void rgbflash(int pin, int num) {
 void getOutputPinsFromAngle(int angle, struct MotorOutput *motorvals) {
   angle = constrain(angle, 0, 360);
   motorpin_index = angle/MOTOR_ANGLE;
-  if (motorpin_index < 0) motorpin_index = NUM_MOTORS - 1;
+//  if (motorpin_index < 0) motorpin_index = NUM_MOTORS - 1; //the frick is going on here?? I assume at some point previously we were subtracting from motorpin_index? dont think we need this anymore.
   else if (motorpin_index == NUM_MOTORS) motorpin_index = 0;
   motorvals->motor1_pin = MOTORS[motorpin_index];
   if (motorpin_index == NUM_MOTORS-1) motorvals->motor2_pin = MOTORS[0];
@@ -349,7 +351,7 @@ void loop() {
   struct MotorOutput motor_outputs; //Should be destroyed and recreated each loop iteration, not leaking.
   
   // Map the pot output from 0-1023 to 0-360
-  pot_value = analogRead(POT_PIN);
+  pot_value = analogRead(INTENSITY_ADJUST_POT_PIN);
   //MOTOR_PWM_MAX = map(pot_value, 0, 1023, 0, 255);  //TODO FIX ME IN HARDWARE!
   struct ID imudata = getIMUData();
   raw_compass_angle = getCompassHeading(&imudata);
