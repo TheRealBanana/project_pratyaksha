@@ -18,3 +18,6 @@ Here's what the first complete prototype system looks like. The belt is made fro
 
 Aug 2021 update
 Turns out not knowing anything about designing circuit boards came back to bite me. My current design has overcurrent issues burning traces out. I needed to add a current limiting resistor to the motor outputs (not sure why I didnt) and maybe thicker traces. Taking a break from the project for a while to concentrate on a laser projector I'm trying to design.
+
+A pic of the v2 board that didn't work right:
+![pratyaksha_belt-pcb-v2](https://user-images.githubusercontent.com/10580033/120402121-44fb5f00-c2f6-11eb-8233-ff32d2ef164d.jpeg)
